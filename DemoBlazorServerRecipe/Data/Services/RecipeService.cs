@@ -163,7 +163,10 @@ namespace DemoBlazorServerRecipe.Data.Services
 
         public async Task<List<RecipeDTO>> GetRecipesByCountryIdAsync(int countryId)
         {
-            var recipes =  appDbContext.Recipes.Where(recipe => recipe.CountryId == countryId);
+            var recipes =  appDbContext.Recipes
+                .Where(recipe => recipe.CountryId == countryId)
+                .Include(recipe => recipe.Country);
+
             if (recipes is null)
                 return null!;
 
@@ -173,29 +176,80 @@ namespace DemoBlazorServerRecipe.Data.Services
         #endregion
 
         #region Step Methods
-        public Task<int> AddOrUpdateStepAsync(StepDTO stepDTO)
+        public async Task<int> AddOrUpdateStepAsync(StepDTO stepDTO)
         {
-            throw new NotImplementedException();
+            if (stepDTO is null)
+                return (int)HttpStatusCode.BadRequest;
+
+            var step = mapper.Map<Step>(stepDTO);
+            if(step.Id != 0)
+            {
+                var findStep = await appDbContext.Procedures.FindAsync(stepDTO.Id);
+                if (findStep is null)
+                    return (int)HttpStatusCode.NotFound;
+
+                findStep.ProcedureNumber = stepDTO.ProcedureNumber;
+                findStep.Description = stepDTO.Description;
+                findStep.Title = stepDTO.Title;
+                findStep.TimeNeeded = stepDTO.TimeNeeded;
+                findStep.RecipeId = stepDTO.RecipeId;
+
+                await appDbContext.SaveChangesAsync();
+                return (int)HttpStatusCode.OK;
+            }
+
+            var chk = await appDbContext.Procedures
+                .Where(step => step.Title.ToLower().Equals(stepDTO.Title.ToLower()))
+                .FirstOrDefaultAsync();
+
+            if (chk is not null)
+                return (int)HttpStatusCode.OK;
+                
+            appDbContext.Add(step);
+            await appDbContext.SaveChangesAsync();
+            return (int)HttpStatusCode.OK;
         }
 
-        public Task<int> DeleteStepAsync(int id)
+        public async Task<int> DeleteStepAsync(int id)
         {
-            throw new NotImplementedException();
+            Step step = await appDbContext.Procedures.FirstOrDefaultAsync(step => step.Id == id);
+            if (step is null)
+                return (int)HttpStatusCode.NotFound;
+
+            appDbContext.Procedures.Remove(step);
+            appDbContext.SaveChanges();
+            return (int)HttpStatusCode.OK;
         }
 
-        public Task<StepDTO> GetStepByIdAsync(int id)
+        public async Task<StepDTO> GetStepByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            Step step = await appDbContext.Procedures.FirstOrDefaultAsync(step => step.Id == id);
+            if (step is null)
+                return null!;
+
+            var stepDTO = mapper.Map<StepDTO>(step);
+            return stepDTO;
         }
 
-        public Task<List<StepDTO>> GetStepByRecipeIdAsync(int recipeId)
+        public async Task<List<StepDTO>> GetStepByRecipeIdAsync(int recipeId)
         {
-            throw new NotImplementedException();
+            var results = await appDbContext.Procedures.Where(step => step.RecipeId == recipeId).ToListAsync();
+            var list = results.Select(mapper.Map<StepDTO>);
+            return list.ToList();
+
         }
 
-        public Task<List<StepDTO>> GetStepsAsync()
+        public async Task<List<StepDTO>> GetStepsAsync()
         {
-            throw new NotImplementedException();
+            var steps = await appDbContext.Procedures
+                .Include(step => step.Recipe)
+                .ToListAsync();
+
+            if (steps is null)
+                return null!;
+
+            var stepsDTO = steps.Select(mapper.Map<StepDTO>);
+            return stepsDTO.ToList();
         }
         #endregion
 
