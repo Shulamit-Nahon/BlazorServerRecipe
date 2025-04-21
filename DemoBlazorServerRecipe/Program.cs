@@ -1,5 +1,7 @@
 using DemoBlazorServerRecipe.Components;
 using DemoBlazorServerRecipe.Data;
+using DemoBlazorServerRecipe.Data.Services;
+using DemoBlazorServerRecipe.Data.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Syncfusion.Blazor;
 
@@ -14,6 +16,9 @@ builder.Services.AddDbContext<AppDbContext>( options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ??
         throw new InvalidOperationException("Connection string not found"));
 });
+
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
+builder.Services.AddScoped<IRecipeService, RecipeService>();
 
 var app = builder.Build();
 
