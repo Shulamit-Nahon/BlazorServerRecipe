@@ -120,11 +120,11 @@
         {
             string format = string.Empty;
             if (file.FileInfo.Name.ToLower().Contains("png"))
-                format = "imag/png";
+                format = "image/png";
             if (file.FileInfo.Name.ToLower().Contains("jpg"))
-                format = "imag/jpg";
+                format = "image/jpg";
             if (file.FileInfo.Name.ToLower().Contains("png"))
-                format = "imag/png";
+                format = "image/png";
 
             var selectedFile = file.File;
             var resizeImage = await selectedFile.RequestImageFileAsync(format, 300, 300);
